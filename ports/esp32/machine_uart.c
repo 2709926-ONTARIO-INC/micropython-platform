@@ -52,10 +52,15 @@
 
 #define UART_INV_MASK (UART_INV_TX | UART_INV_RX | UART_INV_RTS | UART_INV_CTS)
 
+#define UART_MODE_NORMAL UART_MODE_UART
+#define UART_MODE_RS485  UART_MODE_RS485_HALF_DUPLEX
+#define UART_MODE_IRDA   UART_MODE_IRDA
+
 typedef struct _machine_uart_obj_t {
     mp_obj_base_t base;
     uart_port_t uart_num;
     uart_hw_flowcontrol_t flowcontrol;
+    uart_mode_t mode;
     uint8_t bits;
     uint8_t parity;
     uint8_t stop;
@@ -124,11 +129,27 @@ STATIC void machine_uart_print(const mp_print_t *print, mp_obj_t self_in, mp_pri
             mp_printf(print, "CTS");
         }
     }
+    mp_printf(print, ", mode=");
+    switch(self->mode)
+    {
+        case UART_MODE_UART:
+            mp_printf(print, "UART");
+            break;
+        case UART_MODE_RS485_HALF_DUPLEX:
+            mp_printf(print, "RS485");
+            break;
+        case UART_MODE_IRDA:
+            mp_printf(print, "IRDA");
+            break;
+        default:
+            mp_printf(print, "TEST");
+            break;
+    }
     mp_printf(print, ")");
 }
 
 STATIC void machine_uart_init_helper(machine_uart_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    enum { ARG_baudrate, ARG_bits, ARG_parity, ARG_stop, ARG_tx, ARG_rx, ARG_rts, ARG_cts, ARG_txbuf, ARG_rxbuf, ARG_timeout, ARG_timeout_char, ARG_invert, ARG_flow };
+    enum { ARG_baudrate, ARG_bits, ARG_parity, ARG_stop, ARG_tx, ARG_rx, ARG_rts, ARG_cts, ARG_txbuf, ARG_rxbuf, ARG_timeout, ARG_timeout_char, ARG_invert, ARG_flow, ARG_mode };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_baudrate, MP_ARG_INT, {.u_int = 0} },
         { MP_QSTR_bits, MP_ARG_INT, {.u_int = 0} },
@@ -144,6 +165,7 @@ STATIC void machine_uart_init_helper(machine_uart_obj_t *self, size_t n_args, co
         { MP_QSTR_timeout_char, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
         { MP_QSTR_invert, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
         { MP_QSTR_flow, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
+        { MP_QSTR_mode, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
@@ -301,6 +323,17 @@ STATIC void machine_uart_init_helper(machine_uart_obj_t *self, size_t n_args, co
         self->flowcontrol = args[ARG_flow].u_int;
     }
     uart_set_hw_flow_ctrl(self->uart_num, self->flowcontrol, UART_FIFO_LEN - UART_FIFO_LEN / 4);
+
+    // set UART mode
+    if (args[ARG_mode].u_int != -1) {
+        if(args[ARG_mode].u_int > UART_MODE_IRDA) {
+            mp_raise_ValueError(MP_ERROR_TEXT("invalid uart mode"));
+        }
+        else {
+            self->mode = args[ARG_mode].u_int;
+            uart_set_mode(self->uart_num, self->mode);
+        }        
+    }    
 }
 
 STATIC mp_obj_t machine_uart_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -453,6 +486,10 @@ STATIC const mp_rom_map_elem_t machine_uart_locals_dict_table[] = {
 
     { MP_ROM_QSTR(MP_QSTR_RTS), MP_ROM_INT(UART_HW_FLOWCTRL_RTS) },
     { MP_ROM_QSTR(MP_QSTR_CTS), MP_ROM_INT(UART_HW_FLOWCTRL_CTS) },
+
+    { MP_ROM_QSTR(MP_QSTR_MODE_NORMAL), MP_ROM_INT(UART_MODE_NORMAL) },
+    { MP_ROM_QSTR(MP_QSTR_MODE_RS485), MP_ROM_INT(UART_MODE_RS485) },
+    { MP_ROM_QSTR(MP_QSTR_MODE_IRDA), MP_ROM_INT(UART_MODE_IRDA) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(machine_uart_locals_dict, machine_uart_locals_dict_table);
