@@ -8,6 +8,7 @@ import uasyncio as asyncio
 from base64 import b64encode, b64decode
 from machine import UART
 from wifi_mgr import wifi_connect
+import json
 
 uart = UART(1, 9600, tx=16, rx=15, rts=17, mode=UART.MODE_RS485, timeout=10, timeout_char=10)
 ser_to_mqtt = list()
@@ -26,6 +27,9 @@ async def receiver():
         res = await sreader.read(1024)
         if(None != res):
             print('Received', res)
+            #Create the json payload
+            root["gid"] = machine.unique_id()
+            root[""]
             ser_to_mqtt.append(b64encode(res))
 
 async def main():
