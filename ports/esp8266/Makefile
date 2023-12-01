@@ -110,14 +110,10 @@ SRC_C = \
 	uart.c \
 	esppwm.c \
 	espapa102.c \
-	modmachine.c \
 	machine_bitstream.c \
 	machine_pin.c \
 	machine_rtc.c \
-	machine_adc.c \
-	machine_uart.c \
-	machine_wdt.c \
-	machine_hspi.c \
+	machine_spi.c \
 	modesp.c \
 	network_wlan.c \
 	ets_alt_task.c \
@@ -190,8 +186,6 @@ OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(SHARED_SRC_C)
-# Append any auto-generated sources that are needed by sources listed in SRC_QSTR
-SRC_QSTR_AUTO_DEPS +=
 
 all: $(FWBIN)
 

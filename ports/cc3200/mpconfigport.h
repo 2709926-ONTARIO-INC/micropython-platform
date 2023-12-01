@@ -115,11 +115,22 @@
 #define MICROPY_PY_RE                               (1)
 #define MICROPY_PY_HEAPQ                            (0)
 #define MICROPY_PY_HASHLIB                          (0)
+#define MICROPY_PY_OS                               (1)
+#define MICROPY_PY_OS_INCLUDEFILE                   "ports/cc3200/mods/modos.c"
+#define MICROPY_PY_OS_DUPTERM                       (1)
+#define MICROPY_PY_OS_SYNC                          (1)
+#define MICROPY_PY_OS_URANDOM                       (1)
 #define MICROPY_PY_SELECT                           (1)
 #define MICROPY_PY_TIME                             (1)
 #define MICROPY_PY_TIME_GMTIME_LOCALTIME_MKTIME     (1)
 #define MICROPY_PY_TIME_TIME_TIME_NS                (1)
 #define MICROPY_PY_TIME_INCLUDEFILE                 "ports/cc3200/mods/modtime.c"
+#define MICROPY_PY_MACHINE                          (1)
+#define MICROPY_PY_MACHINE_INCLUDEFILE              "ports/cc3200/mods/modmachine.c"
+#define MICROPY_PY_MACHINE_BARE_METAL_FUNCS         (1)
+#define MICROPY_PY_MACHINE_DISABLE_IRQ_ENABLE_IRQ   (1)
+#define MICROPY_PY_MACHINE_WDT                      (1)
+#define MICROPY_PY_MACHINE_WDT_INCLUDEFILE          "ports/cc3200/mods/machine_wdt.c"
 
 #define MICROPY_ENABLE_EMERGENCY_EXCEPTION_BUF      (1)
 #define MICROPY_EMERGENCY_EXCEPTION_BUF_SIZE        (0)

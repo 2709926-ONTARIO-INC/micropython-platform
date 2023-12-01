@@ -64,11 +64,14 @@
 #define MICROPY_PY_IO               (0)
 #define MICROPY_PY_MICROPYTHON_MEM_INFO (1)
 #define MICROPY_PY_MACHINE          (1)
+#define MICROPY_PY_MACHINE_INCLUDEFILE "ports/zephyr/modmachine.c"
 #define MICROPY_PY_MACHINE_I2C      (1)
 #define MICROPY_PY_MACHINE_SPI      (1)
 #define MICROPY_PY_MACHINE_SPI_MSB (SPI_TRANSFER_MSB)
 #define MICROPY_PY_MACHINE_SPI_LSB (SPI_TRANSFER_LSB)
 #define MICROPY_PY_MACHINE_PIN_MAKE_NEW mp_pin_make_new
+#define MICROPY_PY_MACHINE_UART     (1)
+#define MICROPY_PY_MACHINE_UART_INCLUDEFILE "ports/zephyr/machine_uart.c"
 #define MICROPY_PY_STRUCT           (0)
 #ifdef CONFIG_NETWORKING
 // If we have networking, we likely want errno comfort

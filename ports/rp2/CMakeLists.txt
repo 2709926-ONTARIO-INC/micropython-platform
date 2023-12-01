@@ -102,6 +102,7 @@ set(MICROPY_SOURCE_LIB
     ${MICROPY_DIR}/shared/runtime/mpirq.c
     ${MICROPY_DIR}/shared/runtime/pyexec.c
     ${MICROPY_DIR}/shared/runtime/stdout_helpers.c
+    ${MICROPY_DIR}/shared/runtime/softtimer.c
     ${MICROPY_DIR}/shared/runtime/sys_stdio_mphal.c
     ${MICROPY_DIR}/shared/timeutils/timeutils.c
     ${MICROPY_DIR}/shared/tinyusb/mp_cdc_common.c
@@ -117,18 +118,13 @@ set(MICROPY_SOURCE_DRIVERS
 set(MICROPY_SOURCE_PORT
     fatfs_port.c
     help.c
-    machine_adc.c
     machine_bitstream.c
     machine_i2c.c
-    machine_i2s.c
     machine_pin.c
     machine_rtc.c
     machine_spi.c
     machine_timer.c
-    machine_uart.c
-    machine_wdt.c
     main.c
-    modmachine.c
     modrp2.c
     mphalport.c
     mpnetworkport.c
@@ -150,14 +146,12 @@ set(MICROPY_SOURCE_QSTR
     ${MICROPY_DIR}/shared/runtime/sys_stdio_mphal.c
     ${MICROPY_PORT_DIR}/machine_adc.c
     ${MICROPY_PORT_DIR}/machine_i2c.c
-    ${MICROPY_PORT_DIR}/machine_i2s.c
     ${MICROPY_PORT_DIR}/machine_pin.c
     ${MICROPY_PORT_DIR}/machine_rtc.c
     ${MICROPY_PORT_DIR}/machine_spi.c
     ${MICROPY_PORT_DIR}/machine_timer.c
     ${MICROPY_PORT_DIR}/machine_uart.c
     ${MICROPY_PORT_DIR}/machine_wdt.c
-    ${MICROPY_PORT_DIR}/modmachine.c
     ${MICROPY_PORT_DIR}/modrp2.c
     ${MICROPY_PORT_DIR}/modos.c
     ${MICROPY_PORT_DIR}/rp2_flash.c
@@ -411,6 +405,7 @@ target_compile_options(${MICROPY_TARGET} PRIVATE
 
 target_link_options(${MICROPY_TARGET} PRIVATE
     -Wl,--defsym=__micropy_c_heap_size__=${MICROPY_C_HEAP_SIZE}
+    -Wl,--wrap=dcd_event_handler
 )
 
 set_source_files_properties(
@@ -484,13 +479,10 @@ set(GEN_PINS_PREFIX "${MICROPY_BOARDS_DIR}/rp2_prefix.c")
 set(GEN_PINS_MKPINS "${MICROPY_BOARDS_DIR}/make-pins.py")
 set(GEN_PINS_SRC "${CMAKE_BINARY_DIR}/pins_${MICROPY_BOARD}.c")
 set(GEN_PINS_HDR "${MICROPY_GENHDR_DIR}/pins.h")
-set(GEN_PINS_QSTR "${CMAKE_BINARY_DIR}/pins_qstr.h")
-set(GEN_PINS_AF_CONST "${MICROPY_GENHDR_DIR}/pins_af_const.h")
-set(GEN_PINS_AF_PY "${CMAKE_BINARY_DIR}/pins_af.py")
 
 if(EXISTS "${MICROPY_BOARDS_DIR}/${MICROPY_BOARD}/pins.csv")
     set(GEN_PINS_BOARD_CSV "${MICROPY_BOARDS_DIR}/${MICROPY_BOARD}/pins.csv")
-    set(GEN_PINS_CSV_ARG --board "${GEN_PINS_BOARD_CSV}")
+    set(GEN_PINS_CSV_ARG --board-csv "${GEN_PINS_BOARD_CSV}")
 endif()
 
 target_sources(${MICROPY_TARGET} PRIVATE
@@ -499,9 +491,8 @@ target_sources(${MICROPY_TARGET} PRIVATE
 
 # Generate pins
 add_custom_command(
-    OUTPUT ${GEN_PINS_HDR} ${GEN_PINS_SRC} ${GEN_PINS_QSTR}
-    COMMAND ${Python3_EXECUTABLE} ${GEN_PINS_MKPINS} ${GEN_PINS_CSV_ARG} --af ${GEN_PINS_AF_CSV} --prefix ${GEN_PINS_PREFIX}
-    --hdr ${GEN_PINS_HDR} --qstr ${GEN_PINS_QSTR} --af-const ${GEN_PINS_AF_CONST} --af-py ${GEN_PINS_AF_PY} > ${GEN_PINS_SRC}
+    OUTPUT ${GEN_PINS_HDR} ${GEN_PINS_SRC}
+    COMMAND ${Python3_EXECUTABLE} ${GEN_PINS_MKPINS} ${GEN_PINS_CSV_ARG} --af-csv ${GEN_PINS_AF_CSV} --prefix ${GEN_PINS_PREFIX} --output-source ${GEN_PINS_SRC} --output-header ${GEN_PINS_HDR}
     DEPENDS
         ${GEN_PINS_AF_CSV}
         ${GEN_PINS_BOARD_CSV}

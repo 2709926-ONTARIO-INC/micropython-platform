@@ -96,8 +96,21 @@
 #define MICROPY_PY_OS_UNAME                 (1)
 #define MICROPY_PY_OS_URANDOM               (1)
 #define MICROPY_PY_MACHINE                  (1)
+#define MICROPY_PY_MACHINE_INCLUDEFILE      "ports/esp32/modmachine.c"
+#define MICROPY_PY_MACHINE_BARE_METAL_FUNCS (1)
+#define MICROPY_PY_MACHINE_BOOTLOADER       (1)
+#define MICROPY_PY_MACHINE_DISABLE_IRQ_ENABLE_IRQ (1)
+#define MICROPY_PY_MACHINE_ADC              (1)
+#define MICROPY_PY_MACHINE_ADC_INCLUDEFILE  "ports/esp32/machine_adc.c"
+#define MICROPY_PY_MACHINE_ADC_ATTEN_WIDTH  (1)
+#define MICROPY_PY_MACHINE_ADC_INIT         (1)
+#define MICROPY_PY_MACHINE_ADC_READ         (1)
+#define MICROPY_PY_MACHINE_ADC_READ_UV      (1)
+#define MICROPY_PY_MACHINE_ADC_BLOCK        (1)
+#define MICROPY_PY_MACHINE_ADC_BLOCK_INCLUDEFILE "ports/esp32/machine_adc_block.c"
 #define MICROPY_PY_MACHINE_PIN_MAKE_NEW     mp_pin_make_new
 #define MICROPY_PY_MACHINE_BITSTREAM        (1)
+#define MICROPY_PY_MACHINE_DHT_READINTO     (1)
 #define MICROPY_PY_MACHINE_PULSE            (1)
 #define MICROPY_PY_MACHINE_PWM              (1)
 #define MICROPY_PY_MACHINE_PWM_DUTY         (1)
@@ -115,6 +128,15 @@
 #ifndef MICROPY_PY_MACHINE_I2S
 #define MICROPY_PY_MACHINE_I2S              (1)
 #endif
+#define MICROPY_PY_MACHINE_I2S_INCLUDEFILE  "ports/esp32/machine_i2s.c"
+#define MICROPY_PY_MACHINE_I2S_FINALISER    (1)
+#define MICROPY_PY_MACHINE_I2S_CONSTANT_RX  (I2S_MODE_MASTER | I2S_MODE_RX)
+#define MICROPY_PY_MACHINE_I2S_CONSTANT_TX  (I2S_MODE_MASTER | I2S_MODE_TX)
+#define MICROPY_PY_MACHINE_UART             (1)
+#define MICROPY_PY_MACHINE_UART_INCLUDEFILE "ports/esp32/machine_uart.c"
+#define MICROPY_PY_MACHINE_UART_SENDBREAK   (1)
+#define MICROPY_PY_MACHINE_WDT              (1)
+#define MICROPY_PY_MACHINE_WDT_INCLUDEFILE  "ports/esp32/machine_wdt.c"
 #define MICROPY_PY_NETWORK (1)
 #ifndef MICROPY_PY_NETWORK_HOSTNAME_DEFAULT
 #if CONFIG_IDF_TARGET_ESP32
@@ -144,7 +166,6 @@
 #define MICROPY_PY_ONEWIRE                  (1)
 #define MICROPY_PY_SOCKET_EVENTS            (MICROPY_PY_WEBREPL)
 #define MICROPY_PY_BLUETOOTH_RANDOM_ADDR    (1)
-#define MICROPY_PY_BLUETOOTH_DEFAULT_GAP_NAME ("ESP32")
 
 // fatfs configuration
 #define MICROPY_FATFS_ENABLE_LFN            (1)
