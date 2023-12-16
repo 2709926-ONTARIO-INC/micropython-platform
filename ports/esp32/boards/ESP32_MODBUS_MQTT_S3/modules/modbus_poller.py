@@ -20,11 +20,49 @@ async def poll_modbus_server(client, server_config):
                     if reg['data_type'] is 'float':
                         result = client.read_holding_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=2,signed=False)
                         result = struct.unpack('!f', bytes.fromhex('{0:02x}'.format(result[0]) + '{0:02x}'.format(result[1])))
+                    elif reg['data_type'] is 'int16':
+                        result = client.read_holding_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=1,signed=False)
+                        result = struct.unpack('!h', bytes.fromhex('{0:02x}'.format(result[0])))
+                    elif reg['data_type'] is 'uint16':
+                        result = client.read_holding_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=1,signed=False)
+                        result = struct.unpack('!H', bytes.fromhex('{0:02x}'.format(result[0])))
+                    elif reg['data_type'] is 'int32':
+                        result = client.read_holding_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=2,signed=False)
+                        result = struct.unpack('!i', bytes.fromhex('{0:02x}'.format(result[0]) + '{0:02x}'.format(result[1])))
+                    elif reg['data_type'] is 'uint32':
+                        result = client.read_holding_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=2,signed=False)
+                        result = struct.unpack('!I', bytes.fromhex('{0:02x}'.format(result[0]) + '{0:02x}'.format(result[1])))
+                    elif reg['data_type'] is 'int64':
+                        result = client.read_holding_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=4,signed=False)
+                        result = struct.unpack('!q', bytes.fromhex('{0:02x}'.format(result[0]) + '{0:02x}'.format(result[1]) + '{0:02x}'.format(result[2]) + '{0:02x}'.format(result[3])))
+                    elif reg['data_type'] is 'uint64':
+                        result = client.read_holding_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=4,signed=False)
+                        result = struct.unpack('!q', bytes.fromhex('{0:02x}'.format(result[0]) + '{0:02x}'.format(result[1]) + '{0:02x}'.format(result[2]) + '{0:02x}'.format(result[3])))
                 elif reg['register_type'] == 'input_registers':
-                    result = client.read_input_registers(server_config['register_start'], server_config['register_count'])
+                    if reg['data_type'] is 'float':
+                        result = client.read_input_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=2,signed=False)
+                        result = struct.unpack('!f', bytes.fromhex('{0:02x}'.format(result[0]) + '{0:02x}'.format(result[1])))                        
+                    elif reg['data_type'] is 'int16':
+                        result = client.read_input_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=1,signed=False)
+                        result = struct.unpack('!h', bytes.fromhex('{0:02x}'.format(result[0])))
+                    elif reg['data_type'] is 'uint16':
+                        result = client.read_input_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=1,signed=False)
+                        result = struct.unpack('!H', bytes.fromhex('{0:02x}'.format(result[0])))
+                    elif reg['data_type'] is 'int32':
+                        result = client.read_input_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=2,signed=False)
+                        result = struct.unpack('!i', bytes.fromhex('{0:02x}'.format(result[0]) + '{0:02x}'.format(result[1])))
+                    elif reg['data_type'] is 'uint32':
+                        result = client.read_input_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=2,signed=False)
+                        result = struct.unpack('!I', bytes.fromhex('{0:02x}'.format(result[0]) + '{0:02x}'.format(result[1])))
+                    elif reg['data_type'] is 'int64':
+                        result = client.read_input_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=4,signed=False)
+                        result = struct.unpack('!q', bytes.fromhex('{0:02x}'.format(result[0]) + '{0:02x}'.format(result[1]) + '{0:02x}'.format(result[2]) + '{0:02x}'.format(result[3])))
+                    elif reg['data_type'] is 'uint64':
+                        result = client.read_input_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=4,signed=False)
+                        result = struct.unpack('!q', bytes.fromhex('{0:02x}'.format(result[0]) + '{0:02x}'.format(result[1]) + '{0:02x}'.format(result[2]) + '{0:02x}'.format(result[3])))
                 # Add more data type conditions as necessary
 
-                print(f"Server ID {server_config['modbus_id']} - Received data: {result}")
+                print(f"Server ID {server_config['modbus_id']} - {reg['name']} = {result[0]}")
         except Exception as e:
             print(f"Error reading Modbus Server ID {server_config['modbus_id']}: {str(e)}")
 
