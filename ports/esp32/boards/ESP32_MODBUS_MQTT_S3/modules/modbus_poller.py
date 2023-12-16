@@ -4,6 +4,7 @@ from machine import UART
 import umodbus.serial as modbus_serial
 from umodbus.tcp import TCP as ModbusTCPMaster
 import socket
+import struct
 
 # Function to read configuration
 def read_config(filename):
@@ -18,6 +19,7 @@ async def poll_modbus_server(client, server_config):
                 if reg['register_type'] == 'holding_registers':
                     if reg['data_type'] is 'float':
                         result = client.read_holding_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=2,signed=False)
+                        result = struct.unpack('!f', bytes.fromhex('{0:02x}'.format(result[0]) + '{0:02x}'.format(result[1])))
                 elif reg['register_type'] == 'input_registers':
                     result = client.read_input_registers(server_config['register_start'], server_config['register_count'])
                 # Add more data type conditions as necessary
