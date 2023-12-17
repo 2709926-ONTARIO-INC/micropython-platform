@@ -17,4 +17,4 @@ float   32-bit value (2 words)              -3.4028E+38... +3.4028E+38
 
 string  8-bit alphanumeric character        Table of ASCII Characters
 
-bit     16-bit field (1 word)               -
+bit    1 bit boolean                       -
