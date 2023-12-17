@@ -72,11 +72,17 @@ async def poll_modbus_server(client, server_config):
                     print(f"Server ID {server_config['ip']} - {reg['name']} = {result[0]}")
         except Exception as e:
             print(f"Error reading Modbus Server ID {server_config['modbus_id']}: {str(e)}")
-            if e == errno.ENOTCONN:
+            if (e.errno == errno.ENOTCONN) or (e.errno == errno.ETIMEDOUT):                
                 #Try to reconnect the socket
                 try:
-                    client.close()
-                    client = ModbusTCPMaster(slave_ip=server_config['ip'], slave_port=server_config['port'])
+                    if 'error_cnt' in server_config:
+                        server_config['error_cnt'] = server_config['error_cnt'] + 1
+                    else:
+                        server_config['error_cnt'] = 1
+                    if server_config['error_cnt'] > 3:
+                        server_config['error_cnt'] = 0
+                        print(f"Trying to restart socket for {server_config['ip']}")
+                        client = ModbusTCPMaster(slave_ip=server_config['ip'], slave_port=server_config['port'])
                 except Exception as e:
                     print(f"Connection error Modbus Server ID {server_config['modbus_id']}: {str(e)}")
 

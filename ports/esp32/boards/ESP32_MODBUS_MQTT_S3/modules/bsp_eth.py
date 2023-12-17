@@ -14,7 +14,7 @@ def init_eth():
     utime.sleep_ms(500)
     rst.value(1)
     utime.sleep_ms(1500)
-    s = SPI(2, sck = Pin(12), mosi=Pin(11), miso=Pin(13))
+    s = SPI(2, baudrate=80000000, sck = Pin(12), mosi=Pin(11), miso=Pin(13))
     lan = network.LAN(phy_type=network.PHY_W5500, phy_addr=0, spi=s, int=Pin(6), cs=Pin(10))
     lan.config(mac=bytearray(unique_id()))
     lan.config("mac")
