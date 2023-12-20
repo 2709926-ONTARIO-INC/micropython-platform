@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In</title>
+    <script src="https://kit.fontawesome.com/374f8eef92.js" crossorigin="anonymous"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz@6..12&family=Poppins&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            box-sizing: border-box;
+        }
+
+        .container{
+            width: 100%;
+            height: 100vh;
+            background-color: #FFF2D8;
+        }
+
+        .form-box{
+            width: 90%;
+            max-width: 450px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            background: #AE445A;
+            padding: 50px 60px 70px;
+            text-align: center;
+        }
+
+        .form-box h1{
+            font-size: 30px;
+            margin-bottom: 60px;
+            color: #FFF2D8;
+            position: relative;
+        }
+
+        .form-box h1::after{
+            content: '';
+            width: 30px;
+            height: 4px;
+            border-radius: 3px;
+            background: #FFF2D8;
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .input-field{
+            background: #FFF2D8;
+            margin: 15px 0;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            max-height: 65px;
+            transition: max-height 0.5s;
+            overflow: hidden;
+        }
+        input{
+            width: 100%;
+            background: transparent;
+            border: 0;
+            outline: 0;
+            padding: 18px 15px;
+        }
+        .input-field i{
+            margin-left: 15px;
+        }
+        form p{
+            text-align: center;
+            font-size: 13px;
+            color: #FFF2D8;
+        }
+        form p a{
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .btn-field{
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btn-field button{
+            flex-basis: 48%;
+            background: #FFF2D8;
+            height: 40px;
+            border-radius: 10px;
+            border: 0;
+            outline: 0;
+            cursor: pointer;
+            transition: background 1s;
+            margin-top: 20px;
+        }
+
+        .btn-field button.disable{
+            background: #ffcad9;
+        }
+
+        .submit{
+            justify-content: center;
+        }
+        .submit-btn{
+            justify-content: center;
+            margin-bottom: 6px;
+            margin-top: -12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-box">
+            <h1 id="title">Sign In</h1>
+            <form>
+                <div class="input-group">
+                    <div class="input-field" >
+                        <i class="fa-solid fa-user"></i>
+                        <input type="email" id="username" placeholder="Username">
+                    </div>
+                    <div class="input-field" >
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="password" placeholder="Password">
+                    </div>
+                    <p>Forgot Password?<a href="#"> Click here!</a></p>
+                    <div class="btn-field submit-btn">
+                        <button type="button" onclick="myFunction()" class="submit">Submit</button>     
+                    </div>
+                    
+                </div>
+                
+            </form>
+        </div>
+    </div>
+    <script>
+        
+        function myFunction() {
+            const login_credentials = {
+                "username": document.getElementById("username").value,
+                "password": document.getElementById("password").value,
+            };
+
+            var json_format = JSON.stringify(login_credentials);
+            console.log(json_format);
+
+            const parsed_json = JSON.parse(json_format);
+            console.log(parsed_json.username);
+        }
+
+        
+    </script>
+</body>
+</html>
