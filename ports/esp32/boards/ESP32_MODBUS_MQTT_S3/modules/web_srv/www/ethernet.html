@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethernet</title>
+    <script src="https://kit.fontawesome.com/374f8eef92.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz@6..12&family=Poppins&display=swap');
+        *{
+            margin: 0;
+            padding: 0;
+            outline: none;
+            border: none;
+            text-decoration: none;
+            box-sizing: border-box;
+            font-family: "Poppins",sans-serif;
+        }
+        body{
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        nav{
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            height: 100%;
+            left: 0;
+            background: #CDF5FD;
+            width: 110px;
+            overflow: hidden;
+            transition: width 0.2s linear;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.1);
+        }
+        .logo{
+            text-align: center;
+            display: flex;
+            transition: all 0.5s ease;
+            margin: 10px 0 0 10px;
+        }
+        .logo img{
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+        }
+        .logo span{
+            font-weight: bold;
+            padding-left: 15px;
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+        a{
+            position: relative;
+            color: rgb(85, 83, 83);
+            font-size: 14px;
+            display: table;
+            width: 300px;
+            padding: 10px;
+        }
+        .fas{
+            position: relative;
+            width: 90px;
+            height: 40px;
+            top: 14px;
+            font-size: 20px;
+            text-align: center;
+        }
+        .nav-item{
+            position: relative;
+            top: 12px;
+            margin-left: 10px;
+            text-align: center;
+        }
+        a:hover{
+            background: #FFF6F6;
+        }
+        nav:hover{
+            width: 280px;
+            transition: all 0.5s ease;
+        }
+        .logout{
+            position: absolute;
+            bottom: 0;
+        }
+        h4{
+            position: relative;
+            width: 90px;
+            height: 40px;
+            top: 14px;  
+            text-align: center;
+            color: #164863;
+        }
+        .container {
+            position: relative;
+            max-width: 750px;
+            width: 100%;
+            border-radius: 6px;
+            padding: 30px;
+            margin: 0 15px;
+            background-color: #CDF5FD;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            margin-left: 10%;
+            height: 450px;
+        }
+        .container .title{
+            font-size: 30px;
+            font-weight: 500;
+            margin: 6px 0;
+            color: #333;
+            font-family: 'Poppins', sans-serif;
+        }
+        .container form input{
+            height: 25px;
+            margin-top: 15px;
+            border-radius: 5px;
+            border: 1px solid #27374D;
+            
+        }
+        #ip-address{
+            margin-left: 34px;
+        }
+        #subnet-mask{
+            margin-left: 12px;
+        }
+        #gateway{
+            margin-left: 44px;
+        }
+        #dns-server{
+            margin-left: 29px;
+        }
+        .container form .ip-mode{
+            margin-top: 15px;
+        }
+        .container form .ip-mode select{
+            width: 165px;
+            margin-left: 52px;
+            border-radius: 5px;
+            height: 25px;
+            border: 1px solid #27374D;
+        }
+        .container form label{
+            font-family: 'Poppins', sans-serif;
+        }
+        .sub{
+            margin-top: 95px;
+        }
+        .sub button{
+            height: 27px;
+            width: 100px;
+            box-shadow: 2px 2px 2px #999;
+            font-weight: 500;
+            text-align: center;
+            background-color: white;
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+        }
+        .sub .write-button{
+            margin-left: 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="#">
+                <h4>Dashboard</h3>
+            </a></li>
+            <li><a href="wifi.html">
+                <i class="fas fa-solid fa-wifi " ></i>
+                <span class="nav-item">Wifi</span>
+            </a></li>
+            <li><a href="ethernet.html">
+                <i class="fas fa-network-wired"></i>
+                <span class="nav-item">Ethernet</span>
+            </a></li>
+            <li><a href="mqtt.html">
+                <i class="fas fa-solid fa-server"></i>
+                <span class="nav-item">MQTT</span>
+            </a></li>
+            <li><a href="4g-lte.html">
+                <i class="fas fa-globe"></i>
+                <span class="nav-item">4G LTE</span>
+            </a></li>
+            <li><a href="#" class="logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="nav-item">Log out</span>
+            </a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="title">Ethernet</div>
+        <form action="#">
+            <div class="labels">
+                <div class="ip-mode">
+                    <label for="ip-mode" class="ip-mode">IP mode</label>
+                    <select id="ip-mode" name="ip-mode">
+                        <option value=""></option>
+                        <option value="static">static</option>
+                        <option value="dynamic">dynamic</option>
+                    </select>
+                </div>
+                <label for="ip-address">IP address</label>
+                <input type="text" id="ip-address" name="ip-address"><br>
+                <label for="subnet-mask">Subnet mask</label>
+                <input type="text" id="subnet-mask" name="subnet-mask"><br>
+                <label for="gateway">Gateway</label>
+                <input type="text" id="gateway" name="gateway"><br>
+                <label for="dns-server">DNS Server</label>
+                <input type="text" id="dns-server" name="dns-server"><br>
+                <div class="sub">
+                    <button type="button" value="Read">Read</button>
+                    <button type="button" class="write-button" value="Write">Write</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

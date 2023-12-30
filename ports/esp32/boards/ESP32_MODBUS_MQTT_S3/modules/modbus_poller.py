@@ -12,6 +12,9 @@ import queue
 from mqtt_as import MQTTClient
 from mqtt_as import config
 
+#web UI imports
+from web_srv import web_ui
+
 mqtt_pub_queue = queue.Queue()
 
 #MQTT callbacks
@@ -49,6 +52,9 @@ async def poll_modbus_server(client, server_config):
                     if reg['data_type'] is 'float':
                         result = client.read_holding_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=2,signed=False)
                         result = struct.unpack('!f', bytes.fromhex('{0:04x}'.format(result[0]) + '{0:04x}'.format(result[1])))
+                    elif reg['data_type'] is 'float_cdab':
+                        result = client.read_holding_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=2,signed=False)
+                        result = struct.unpack('!f', bytes.fromhex('{0:04x}'.format(result[1]) + '{0:04x}'.format(result[0])))
                     elif reg['data_type'] is 'int16':
                         result = client.read_holding_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=1,signed=False)
                         result = struct.unpack('!h', bytes.fromhex('{0:04x}'.format(result[0])))
@@ -70,7 +76,10 @@ async def poll_modbus_server(client, server_config):
                 elif reg['register_type'] == 'input_registers':
                     if reg['data_type'] is 'float':
                         result = client.read_input_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=2,signed=False)
-                        result = struct.unpack('!f', bytes.fromhex('{0:04x}'.format(result[0]) + '{0:04x}'.format(result[1])))                        
+                        result = struct.unpack('!f', bytes.fromhex('{0:04x}'.format(result[0]) + '{0:04x}'.format(result[1])))
+                    elif reg['data_type'] is 'float_cdab':
+                        result = client.read_input_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=2,signed=False)
+                        result = struct.unpack('!f', bytes.fromhex('{0:04x}'.format(result[1]) + '{0:04x}'.format(result[2])))   
                     elif reg['data_type'] is 'int16':
                         result = client.read_input_registers(slave_addr=server_config['modbus_id'],starting_addr=reg['register_start'],register_qty=1,signed=False)
                         result = struct.unpack('!h', bytes.fromhex('{0:04x}'.format(result[0])))
@@ -132,8 +141,11 @@ async def run_modbus_clients(servers_config):
 
         task = asyncio.create_task(poll_modbus_server(client, server_config))
         tasks.append(task)
-    #Finally add the mqtt coro
+    #Add the mqtt coro
     task = asyncio.create_task(mqtt_operations(mqtt_client))
+    tasks.append(task)
+    #Now add the web server coro
+    task = asyncio.create_task(web_ui.app.serve())
     tasks.append(task)
     await asyncio.gather(*tasks)
 

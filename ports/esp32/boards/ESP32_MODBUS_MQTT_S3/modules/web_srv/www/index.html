@@ -18,7 +18,7 @@
         .container{
             width: 100%;
             height: 100vh;
-            background-color: #FFF2D8;
+            background-color: #CDF5FD;
         }
 
         .form-box{
@@ -28,7 +28,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%,-50%);
-            background: #AE445A;
+            /* background: #3887BE; */
+            background-color: #4CB9E7;
             padding: 50px 60px 70px;
             text-align: center;
         }
@@ -36,7 +37,7 @@
         .form-box h1{
             font-size: 30px;
             margin-bottom: 60px;
-            color: #FFF2D8;
+            color: black;
             position: relative;
         }
 
@@ -45,7 +46,7 @@
             width: 30px;
             height: 4px;
             border-radius: 3px;
-            background: #FFF2D8;
+            background: black;
             position: absolute;
             bottom: -12px;
             left: 50%;
@@ -53,7 +54,7 @@
         }
 
         .input-field{
-            background: #FFF2D8;
+            background: white;
             margin: 15px 0;
             border-radius: 3px;
             display: flex;
@@ -75,11 +76,11 @@
         form p{
             text-align: center;
             font-size: 13px;
-            color: #FFF2D8;
+            color: black;
         }
         form p a{
             text-decoration: none;
-            color: #fff;
+            color: white;
         }
 
         .btn-field{
@@ -90,7 +91,7 @@
 
         .btn-field button{
             flex-basis: 48%;
-            background: #FFF2D8;
+            background: white;
             height: 40px;
             border-radius: 10px;
             border: 0;
@@ -151,6 +152,7 @@
 
             const parsed_json = JSON.parse(json_format);
             console.log(parsed_json.username);
+            window.location.replace("wifi.html");
         }
 
         
