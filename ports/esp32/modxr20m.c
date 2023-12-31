@@ -5,18 +5,6 @@
 #include <stdbool.h>
 #include "xr20m_drv.h"
 
-#define MAGIC_CONSTANT 42
-STATIC const MP_DEFINE_STR_OBJ(version_string_obj, "1.2.3");
-
-const mp_rom_obj_tuple_t version_tuple_obj = {
-    {&mp_type_tuple},
-    2,
-    {
-        MP_ROM_INT(1),
-        MP_ROM_PTR(&version_string_obj),
-    },
-};
-
 STATIC mp_obj_t xr20m_init(void) {
     bool rc = true;
     init_serial();
@@ -26,11 +14,44 @@ STATIC mp_obj_t xr20m_init(void) {
 // Define a Python reference to the function above.
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(xr20m_init_obj, xr20m_init);
 
+STATIC mp_obj_t xr20m_write(mp_obj_t a_obj, mp_obj_t b_obj) {
+    bool rc = true;
+    // Extract the ints from the micropython input objects.
+    uint8_t ch = mp_obj_get_int(a_obj);
+    uint8_t data = mp_obj_get_int(b_obj);
+    xr20m_write_ll(ch, data);
+    // Calculate the addition and convert to MicroPython object.
+    return mp_obj_new_bool(rc);
+}
+// Define a Python reference to the function above.
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(xr20m_write_obj, xr20m_write);
+
+STATIC mp_obj_t xr20m_any(mp_obj_t a_obj) {
+    // Extract the ints from the micropython input objects.
+    uint8_t ch = mp_obj_get_int(a_obj);
+    int bytes_waiting = xr20m_any_ll(ch);
+    // Calculate the addition and convert to MicroPython object.
+    return mp_obj_new_int(bytes_waiting);
+}
+// Define a Python reference to the function above.
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(xr20m_any_obj, xr20m_any);
+
+STATIC mp_obj_t xr20m_pop(mp_obj_t a_obj) {
+    // Extract the ints from the micropython input objects.
+    uint8_t ch = mp_obj_get_int(a_obj);
+    int bytes_waiting = xr20m_pop_ll(ch);
+    // Calculate the addition and convert to MicroPython object.
+    return mp_obj_new_int(bytes_waiting);
+}
+// Define a Python reference to the function above.
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(xr20m_pop_obj, xr20m_pop);
+
 STATIC const mp_rom_map_elem_t xr20m_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_xr20m) },
-    { MP_ROM_QSTR(MP_QSTR_magic), MP_ROM_INT(MAGIC_CONSTANT) },
-    { MP_ROM_QSTR(MP_QSTR_version_tuple), MP_ROM_PTR(&version_tuple_obj) },
     { MP_ROM_QSTR(MP_QSTR_xr20m_init), MP_ROM_PTR(&xr20m_init_obj) },
+    { MP_ROM_QSTR(MP_QSTR_xr20m_write), MP_ROM_PTR(&xr20m_write_obj) },
+    { MP_ROM_QSTR(MP_QSTR_xr20m_any), MP_ROM_PTR(&xr20m_any_obj) },
+    { MP_ROM_QSTR(MP_QSTR_xr20m_pop), MP_ROM_PTR(&xr20m_pop_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(xr20m_module_globals, xr20m_module_globals_table);
 
