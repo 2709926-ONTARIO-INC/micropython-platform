@@ -59,3 +59,6 @@
 [submodule "lib/protobuf-c"]
 	path = lib/protobuf-c
 	url = https://github.com/protobuf-c/protobuf-c.git
+[submodule "ports/esp32/components/xr20m"]
+	path = ports/esp32/components/xr20m
+	url = https://github.com/2709926-ONTARIO-INC-ESP32-Components/xr20m.git

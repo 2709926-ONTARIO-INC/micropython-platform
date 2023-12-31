@@ -86,6 +86,7 @@ list(APPEND MICROPY_SOURCE_PORT
     machine_rtc.c
     machine_sdcard.c
     modespnow.c
+    modxr20m.c
 )
 list(TRANSFORM MICROPY_SOURCE_PORT PREPEND ${MICROPY_PORT_DIR}/)
 list(APPEND MICROPY_SOURCE_PORT ${CMAKE_BINARY_DIR}/pins.c)
@@ -133,6 +134,7 @@ list(APPEND IDF_COMPONENTS
     spi_flash
     ulp
     vfs
+    xr20m
 )
 
 # Register the main IDF component.
