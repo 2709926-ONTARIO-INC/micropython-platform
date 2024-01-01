@@ -1,9 +1,19 @@
 import xr20m
 import utime
 
-CHANNELA = const(0)
-CHANNELB = const(1)
-timeout  = const(5000)     #Default time out in ms
+CHANNELA        = const(0)
+CHANNELB        = const(1)
+timeout         = const(5000)     #Default time out in ms
+BAUD_DEFAULT    = const(9600)
+
+#parity constants
+NO_PAITY        = const(0)
+ODD_PARITY      = const(1)
+EVEN_PARITY     = const(2)
+
+#Stop bit
+STOP_1          = const(1)
+STOP_2          = const(2)
 
 class XR20M():
     def __init__(self, channel):
@@ -12,9 +22,30 @@ class XR20M():
         '''
         self.ch = channel
         self.timeout = timeout
+        self.baud = BAUD_DEFAULT
+        self.parity = NO_PAITY
+        self.stop = STOP_1
     
     def set_time_out(self, newtimeout):
+        '''
+        Set the time out in milli seconds
+        '''
         self.timeout = newtimeout
+    
+    def set_baud_rate(self, baud=9600):
+        '''
+        Set the baud rate for this channel. Defaults to 9600
+        '''
+        self.baud = baud
+        xr20m.xr20m_set_baud(self.ch, self.baud)
+        
+    def set_line_encoding(self, parity, stop_bits):
+        '''
+        Set the line encoding. Data length is always fixed at 8 bits
+        '''
+        self.parity = parity
+        self.stop = stop_bits
+        xr20m.xr20m_set_line(self.ch, self.parity, self.stop)
     
     def write(self, buf):
         '''
