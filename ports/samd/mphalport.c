@@ -40,7 +40,7 @@
 
 extern volatile uint32_t ticks_us64_upper;
 
-STATIC uint8_t stdin_ringbuf_array[MICROPY_HW_STDIN_BUFFER_LEN];
+static uint8_t stdin_ringbuf_array[MICROPY_HW_STDIN_BUFFER_LEN];
 ringbuf_t stdin_ringbuf = { stdin_ringbuf_array, sizeof(stdin_ringbuf_array), 0, 0 };
 
 // Explicitly run the USB stack in case the scheduler is locked (eg we are in an
@@ -200,9 +200,12 @@ int mp_hal_stdin_rx_chr(void) {
     }
 }
 
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+mp_uint_t mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+    mp_uint_t ret = len;
+    bool did_write = false;
     if (tud_cdc_connected()) {
-        for (size_t i = 0; i < len;) {
+        size_t i = 0;
+        while (i < len) {
             uint32_t n = len - i;
             if (n > CFG_TUD_CDC_EP_BUFSIZE) {
                 n = CFG_TUD_CDC_EP_BUFSIZE;
@@ -213,14 +216,22 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
                 MICROPY_EVENT_POLL_HOOK_WITH_USB;
             }
             if (timeout >= MICROPY_HW_USB_CDC_TX_TIMEOUT) {
+                ret = i;
                 break;
             }
             uint32_t n2 = tud_cdc_write(str + i, n);
             tud_cdc_write_flush();
             i += n2;
         }
+        ret = MIN(i, ret);
+        did_write = true;
     }
     #if MICROPY_PY_OS_DUPTERM
-    mp_os_dupterm_tx_strn(str, len);
+    int dupterm_res = mp_os_dupterm_tx_strn(str, len);
+    if (dupterm_res >= 0) {
+        did_write = true;
+        ret = MIN((mp_uint_t)dupterm_res, ret);
+    }
     #endif
+    return did_write ? ret : 0;
 }

@@ -6,6 +6,9 @@ else
     MAKEOPTS="-j$(sysctl -n hw.ncpu)"
 fi
 
+# Ensure known OPEN_MAX (NO_FILES) limit.
+ulimit -n 1024
+
 ########################################################################################
 # general helper functions
 
@@ -25,17 +28,6 @@ function ci_c_code_formatting_setup {
 function ci_c_code_formatting_run {
     # Only run on C files. The ruff rule runs separately on Python.
     tools/codeformat.py -v -c
-}
-
-########################################################################################
-# code spelling
-
-function ci_code_spell_setup {
-    pip3 install codespell tomli
-}
-
-function ci_code_spell_run {
-    codespell
 }
 
 ########################################################################################
@@ -186,18 +178,19 @@ function ci_esp8266_build {
 # ports/webassembly
 
 function ci_webassembly_setup {
+    npm install terser
     git clone https://github.com/emscripten-core/emsdk.git
     (cd emsdk && ./emsdk install latest && ./emsdk activate latest)
 }
 
 function ci_webassembly_build {
     source emsdk/emsdk_env.sh
-    make ${MAKEOPTS} -C ports/webassembly
+    make ${MAKEOPTS} -C ports/webassembly VARIANT=pyscript submodules
+    make ${MAKEOPTS} -C ports/webassembly VARIANT=pyscript
 }
 
 function ci_webassembly_run_tests {
-    # This port is very slow at running, so only run a few of the tests.
-    (cd tests && MICROPY_MICROPYTHON=../ports/webassembly/node_run.sh ./run-tests.py -j1 basics/builtin_*.py)
+    make -C ports/webassembly VARIANT=pyscript test_min
 }
 
 ########################################################################################
@@ -374,6 +367,12 @@ function ci_stm32_nucleo_build {
     diff $BUILD_WB55/firmware.unpack.dfu $BUILD_WB55/firmware.unpack_no_sk.dfu
 }
 
+function ci_stm32_misc_build {
+    make ${MAKEOPTS} -C mpy-cross
+    make ${MAKEOPTS} -C ports/stm32 BOARD=ARDUINO_GIGA submodules
+    make ${MAKEOPTS} -C ports/stm32 BOARD=ARDUINO_GIGA
+}
+
 ########################################################################################
 # ports/unix
 
@@ -412,7 +411,7 @@ function ci_unix_build_helper {
 }
 
 function ci_unix_build_ffi_lib_helper {
-    $1 $2 -shared -o tests/unix/ffi_lib.so tests/unix/ffi_lib.c
+    $1 $2 -shared -o tests/ports/unix/ffi_lib.so tests/ports/unix/ffi_lib.c
 }
 
 function ci_unix_run_tests_helper {

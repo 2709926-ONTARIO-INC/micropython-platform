@@ -46,7 +46,7 @@
 #ifndef _WIN32
 #include <signal.h>
 
-STATIC void sighandler(int signum) {
+static void sighandler(int signum) {
     if (signum == SIGINT) {
         #if MICROPY_ASYNC_KBD_INTR
         #if MICROPY_PY_THREAD_GIL
@@ -184,10 +184,15 @@ main_term:;
     return c;
 }
 
-void mp_hal_stdout_tx_strn(const char *str, size_t len) {
+mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
     ssize_t ret;
     MP_HAL_RETRY_SYSCALL(ret, write(STDOUT_FILENO, str, len), {});
-    mp_os_dupterm_tx_strn(str, len);
+    mp_uint_t written = ret < 0 ? 0 : ret;
+    int dupterm_res = mp_os_dupterm_tx_strn(str, len);
+    if (dupterm_res >= 0) {
+        written = MIN((mp_uint_t)dupterm_res, written);
+    }
+    return written;
 }
 
 // cooked is same as uncooked because the terminal does some postprocessing
