@@ -31,7 +31,7 @@ class KTD2026:
         self.write_register(REG_EN, 0x1C)
         time.sleep(0.1)
         
-    def led_level(self, led_ch, level):
+    def set_brightness(self, led_ch, level):
         if(led_ch > self.LED4):
             return -1
         self.write_register(REG_LED1_IOUT + led_ch, level)
