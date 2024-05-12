@@ -4,21 +4,10 @@ from ktd2027 import KTD2026
 from ADS1115 import ADS1115
 from ADS1115 import ADS1115_COMP_0_GND, ADS1115_COMP_1_GND, ADS1115_COMP_2_GND
 from ADS1115 import ADS1115_RANGE_256, ADS1115_RANGE_0512
+from median_filter import MedianFilter
 
 ADS1115_ADDRESS = const(0x48)
 MEASUREMENT_BRIGHTNESS = const(250)
-
-class MedianFilter:
-    def __init__(self, window_size=15):
-        self.window_size = window_size
-        self.values = []
-    
-    def add_value(self, value):
-        self.values.append(value)
-        if len(self.values) > self.window_size:
-            self.values.pop(0)
-        return sorted(self.values)[len(self.values) // 2]
-
 
 class DeviceController:
     GEOMETRY_85 = const(0)
@@ -33,6 +22,9 @@ class DeviceController:
         self.geometry_60_ADC = ADS1115_COMP_1_GND
         self.geometry_20_led = self.led_controller.LED3
         self.geometry_20_ADC = ADS1115_COMP_2_GND
+        self.gemotery_85_100_ADC = 0
+        self.gemotery_60_100_ADC = 0
+        self.gemotery_20_100_ADC = 0
         # Define the command dictionary
         self.commands = {
             '1': self.enable_led,
@@ -41,7 +33,9 @@ class DeviceController:
             '4': self.disable_led,
             '5': self.read_all_adc_channels,
             '6': self.read_zero_calibrated_adc,
-            '7': self.exit_program
+            '7': self.cal_geometry_to_100_gu,
+            '8': self.measure_gloss_units,
+            '9': self.exit_program
         }
 
     def menu(self):
@@ -53,7 +47,9 @@ class DeviceController:
         4. Disable LED
         5. Read RAW ADC Channels
         6. Raw Measurement
-        7. Exit
+        7. Calibrate to 100 GU
+        8. Read GU
+        9. Exit
         """
         print(menu_text)
 
@@ -112,8 +108,6 @@ class DeviceController:
         else:
             led = self.geometry_60_led
             adc = self.geometry_60_ADC
-        print("Starting measurement")
-        print(f"Selected led is {led} and selected adc is {adc}")
         #Turn all LEDs off
         self.led_controller.led_ch_enable(self.geometry_85_led, False)
         self.led_controller.led_ch_enable(self.geometry_60_led, False)
@@ -139,6 +133,48 @@ class DeviceController:
             geometry = self.GEOMETRY_85
         measurement = await self.read_geometry_measurement(geometry)
         print(f"Measurment for selected geometry is {measurement}.")
+    
+    def get_gu(self, geometry, val):
+        gu = 0
+        ref_val = 0
+        if(self.GEOMETRY_20 == geometry):
+            ref_val = self.gemotery_20_100_ADC
+        elif(self.GEOMETRY_60 == geometry):
+            ref_val = self.gemotery_60_100_ADC
+        elif(self.GEOMETRY_85 == geometry):
+            ref_val = self.gemotery_85_100_ADC
+        if(ref_val > 0):
+            gu = val/ref_val
+        else:
+            gu = 0
+        return gu * 100
+    
+    async def cal_geometry_to_100_gu(self):
+        geometry_option = int(input("Enter gemotery 1:20    2:60    3:85    : "))
+        geometry = self.GEOMETRY_60
+        if(1 == geometry_option):
+            geometry = self.GEOMETRY_20
+        elif(3 == geometry_option):
+            geometry = self.GEOMETRY_85
+        measurement = await self.read_geometry_measurement(geometry)
+        print(f"Calibration for selected geometry is {measurement}.")
+        if(1 == geometry_option):
+            self.gemotery_20_100_ADC = measurement
+        elif(2 == geometry_option):
+            self.gemotery_60_100_ADC = measurement
+        elif(3 == geometry_option):
+            self.gemotery_85_100_ADC = measurement
+        
+    async def measure_gloss_units(self):
+        geometry_option = int(input("Enter gemotery 1:20    2:60    3:85    : "))
+        geometry = self.GEOMETRY_60
+        if(1 == geometry_option):
+            geometry = self.GEOMETRY_20
+        elif(3 == geometry_option):
+            geometry = self.GEOMETRY_85
+        measurement = await self.read_geometry_measurement(geometry)
+        gu = self.get_gu(geometry, measurement)
+        print(f"GU = {gu} with measurement {measurement}")
         
     async def exit_program(self):
         print("Exiting program.")
