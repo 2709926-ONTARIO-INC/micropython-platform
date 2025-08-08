@@ -40,6 +40,7 @@ const PROXY_KIND_MP_CALLABLE = 6;
 const PROXY_KIND_MP_GENERATOR = 7;
 const PROXY_KIND_MP_OBJECT = 8;
 const PROXY_KIND_MP_JSPROXY = 9;
+const PROXY_KIND_MP_EXISTING = 10;
 
 const PROXY_KIND_JS_UNDEFINED = 0;
 const PROXY_KIND_JS_NULL = 1;
@@ -61,15 +62,49 @@ class PythonError extends Error {
 function proxy_js_init() {
     globalThis.proxy_js_ref = [globalThis, undefined];
     globalThis.proxy_js_ref_next = PROXY_JS_REF_NUM_STATIC;
+    globalThis.proxy_js_ref_map = new Map();
+    globalThis.proxy_js_map = new Map();
+    globalThis.proxy_js_existing = [undefined];
     globalThis.pyProxyFinalizationRegistry = new FinalizationRegistry(
         (cRef) => {
+            globalThis.proxy_js_map.delete(cRef);
             Module.ccall("proxy_c_free_obj", "null", ["number"], [cRef]);
         },
     );
 }
 
-// js_obj cannot be undefined
+// Check if the c_ref (Python proxy index) has a corresponding JavaScript-side PyProxy
+// associated with it.  If so, take a concrete reference to this PyProxy from the WeakRef
+// and put it in proxy_js_existing, to be referenced and reused by PROXY_KIND_MP_EXISTING.
+function proxy_js_check_existing(c_ref) {
+    const existing_obj = globalThis.proxy_js_map.get(c_ref)?.deref();
+    if (existing_obj === undefined) {
+        return -1;
+    }
+
+    // Search for a free slot in proxy_js_existing.
+    for (let i = 0; i < globalThis.proxy_js_existing.length; ++i) {
+        if (globalThis.proxy_js_existing[i] === undefined) {
+            // Free slot found, put existing_obj here and return the index.
+            globalThis.proxy_js_existing[i] = existing_obj;
+            return i;
+        }
+    }
+
+    // No free slot, so append to proxy_js_existing and return the new index.
+    globalThis.proxy_js_existing.push(existing_obj);
+    return globalThis.proxy_js_existing.length - 1;
+}
+
+// The `js_obj` argument cannot be `undefined`.
+// Returns an integer reference to the given `js_obj`.
 function proxy_js_add_obj(js_obj) {
+    // See if there is an existing JsProxy reference, and use that if there is.
+    const existing_ref = proxy_js_ref_map.get(js_obj);
+    if (existing_ref !== undefined) {
+        return existing_ref;
+    }
+
     // Search for the first free slot in proxy_js_ref.
     while (proxy_js_ref_next < proxy_js_ref.length) {
         if (proxy_js_ref[proxy_js_ref_next] === undefined) {
@@ -77,6 +112,7 @@ function proxy_js_add_obj(js_obj) {
             const id = proxy_js_ref_next;
             ++proxy_js_ref_next;
             proxy_js_ref[id] = js_obj;
+            proxy_js_ref_map.set(js_obj, id);
             return id;
         }
         ++proxy_js_ref_next;
@@ -86,6 +122,7 @@ function proxy_js_add_obj(js_obj) {
     const id = proxy_js_ref.length;
     proxy_js_ref[id] = js_obj;
     proxy_js_ref_next = proxy_js_ref.length;
+    proxy_js_ref_map.set(js_obj, id);
     return id;
 }
 
@@ -241,6 +278,10 @@ function proxy_convert_mp_to_js_obj_jsside(value) {
         // js proxy
         const id = Module.getValue(value + 4, "i32");
         obj = proxy_js_ref[id];
+    } else if (kind === PROXY_KIND_MP_EXISTING) {
+        const id = Module.getValue(value + 4, "i32");
+        obj = globalThis.proxy_js_existing[id];
+        globalThis.proxy_js_existing[id] = undefined;
     } else {
         // obj
         const id = Module.getValue(value + 4, "i32");
@@ -257,6 +298,7 @@ function proxy_convert_mp_to_js_obj_jsside(value) {
             obj = new Proxy(target, py_proxy_handler);
         }
         globalThis.pyProxyFinalizationRegistry.register(obj, id);
+        globalThis.proxy_js_map.set(id, new WeakRef(obj));
     }
     return obj;
 }

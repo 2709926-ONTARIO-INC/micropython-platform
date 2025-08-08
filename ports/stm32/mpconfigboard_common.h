@@ -52,9 +52,48 @@
 #define MICROPY_PY_PYB_LEGACY (1)
 #endif
 
+// Whether to include legacy methods and constants in machine.Pin (which is also pyb.Pin).
+#ifndef MICROPY_PY_MACHINE_PIN_LEGACY
+#define MICROPY_PY_MACHINE_PIN_LEGACY (!MICROPY_PREVIEW_VERSION_2)
+#endif
+
+// Whether to include support for alternate function selection in machine.Pin (and pyb.Pin).
+#ifndef MICROPY_PY_MACHINE_PIN_ALT_SUPPORT
+#define MICROPY_PY_MACHINE_PIN_ALT_SUPPORT (1)
+#endif
+
 // Whether machine.bootloader() will enter the bootloader via reset, or direct jump.
 #ifndef MICROPY_HW_ENTER_BOOTLOADER_VIA_RESET
+#if defined(STM32N6)
+#define MICROPY_HW_ENTER_BOOTLOADER_VIA_RESET (0)
+#else
 #define MICROPY_HW_ENTER_BOOTLOADER_VIA_RESET (1)
+#endif
+#endif
+
+// Whether to enable ROMFS on the internal flash.
+#ifndef MICROPY_HW_ROMFS_ENABLE_INTERNAL_FLASH
+#define MICROPY_HW_ROMFS_ENABLE_INTERNAL_FLASH (0)
+#endif
+
+// Whether to enable ROMFS on external QSPI flash.
+#ifndef MICROPY_HW_ROMFS_ENABLE_EXTERNAL_QSPI
+#define MICROPY_HW_ROMFS_ENABLE_EXTERNAL_QSPI (0)
+#endif
+
+// Whether to enable ROMFS on external XSPI flash.
+#ifndef MICROPY_HW_ROMFS_ENABLE_EXTERNAL_XSPI
+#define MICROPY_HW_ROMFS_ENABLE_EXTERNAL_XSPI (0)
+#endif
+
+// Whether to enable ROMFS partition 0.
+#ifndef MICROPY_HW_ROMFS_ENABLE_PART0
+#define MICROPY_HW_ROMFS_ENABLE_PART0 (0)
+#endif
+
+// Whether to enable ROMFS partition 1.
+#ifndef MICROPY_HW_ROMFS_ENABLE_PART1
+#define MICROPY_HW_ROMFS_ENABLE_PART1 (0)
 #endif
 
 // Whether to enable storage on the internal flash of the MCU
@@ -175,6 +214,12 @@
 // Function to determine if the given spi_id is reserved for system use or not.
 #ifndef MICROPY_HW_SPI_IS_RESERVED
 #define MICROPY_HW_SPI_IS_RESERVED(spi_id) (false)
+#endif
+
+// Function to determine if the given spi_id is static or not.
+// Static SPI instances can be accessed by the user but are not deinit'd on soft reset.
+#ifndef MICROPY_HW_SPI_IS_STATIC
+#define MICROPY_HW_SPI_IS_STATIC(spi_id) (false)
 #endif
 
 // Function to determine if the given tim_id is reserved for system use or not.
@@ -429,6 +474,16 @@
 #define MICROPY_HW_MAX_UART (5)
 #define MICROPY_HW_MAX_LPUART (1)
 
+// Configuration for STM32N6 series
+#elif defined(STM32N6)
+
+#define MP_HAL_UNIQUE_ID_ADDRESS (UID_BASE)
+#define PYB_EXTI_NUM_VECTORS (20) // only EXTI[15:0], RTC and TAMP currently supported
+#define MICROPY_HW_MAX_I2C (4)
+#define MICROPY_HW_MAX_TIMER (18)
+#define MICROPY_HW_MAX_UART (10)
+#define MICROPY_HW_MAX_LPUART (1)
+
 // Configuration for STM32WB series
 #elif defined(STM32WB)
 
@@ -553,8 +608,16 @@
     (op) == BDEV_IOCTL_INIT ? spi_bdev_ioctl(MICROPY_HW_BDEV_SPIFLASH, (op), (uint32_t)MICROPY_HW_BDEV_SPIFLASH_CONFIG) : \
     spi_bdev_ioctl(MICROPY_HW_BDEV_SPIFLASH, (op), (arg)) \
     )
-#define MICROPY_HW_BDEV_READBLOCKS(dest, bl, n) spi_bdev_readblocks(MICROPY_HW_BDEV_SPIFLASH, (dest), (bl), (n))
-#define MICROPY_HW_BDEV_WRITEBLOCKS(src, bl, n) spi_bdev_writeblocks(MICROPY_HW_BDEV_SPIFLASH, (src), (bl), (n))
+#ifndef MICROPY_HW_BDEV_SPIFLASH_OFFSET_BYTES
+#define MICROPY_HW_BDEV_SPIFLASH_OFFSET_BYTES (0)
+#endif
+#define MICROPY_HW_BDEV_SPIFLASH_OFFSET_BLOCKS (MICROPY_HW_BDEV_SPIFLASH_OFFSET_BYTES / FLASH_BLOCK_SIZE)
+#define MICROPY_HW_BDEV_READBLOCKS(dest, bl, n) spi_bdev_readblocks(MICROPY_HW_BDEV_SPIFLASH, (dest), MICROPY_HW_BDEV_SPIFLASH_OFFSET_BLOCKS + (bl), (n))
+#define MICROPY_HW_BDEV_WRITEBLOCKS(src, bl, n) spi_bdev_writeblocks(MICROPY_HW_BDEV_SPIFLASH, (src), MICROPY_HW_BDEV_SPIFLASH_OFFSET_BLOCKS + (bl), (n))
+#endif
+
+#if defined(STM32N6)
+#define MICROPY_FATFS_MAX_SS                    (4096)
 #endif
 
 // Whether to enable caching for external SPI flash, to allow block writes that are
@@ -576,8 +639,16 @@
 #if defined(MICROPY_HW_I2C1_SCL) || defined(MICROPY_HW_I2C2_SCL) \
     || defined(MICROPY_HW_I2C3_SCL) || defined(MICROPY_HW_I2C4_SCL)
 #define MICROPY_HW_ENABLE_HW_I2C (1)
+#ifndef MICROPY_HW_ENABLE_HW_I2C_TARGET
+#if defined(STM32F4) || defined(STM32F7) || defined(STM32H7) || defined(STM32WB)
+#define MICROPY_HW_ENABLE_HW_I2C_TARGET (1)
+#else
+#define MICROPY_HW_ENABLE_HW_I2C_TARGET (0)
+#endif
+#endif
 #else
 #define MICROPY_HW_ENABLE_HW_I2C (0)
+#define MICROPY_HW_ENABLE_HW_I2C_TARGET (0)
 #endif
 
 // Enable CAN if there are any peripherals defined
@@ -619,7 +690,7 @@
 // Whether the USB peripheral is device-only, or multiple OTG
 // For STM32G0 and STM32H5 the USB peripheral supports device and host mode,
 // but otherwise acts like a non-multi-OTG peripheral.
-#if defined(STM32G0) || defined(STM32G4) || defined(STM32H5) || defined(STM32L0) || defined(STM32L1) || defined(STM32L432xx) || defined(STM32WB)
+#if defined(STM32G0) || defined(STM32G4) || defined(STM32H5) || defined(STM32L0) || defined(STM32L1) || defined(STM32L432xx) || defined(STM32L452xx) || defined(STM32WB)
 #define MICROPY_HW_USB_IS_MULTI_OTG (0)
 #else
 #define MICROPY_HW_USB_IS_MULTI_OTG (1)
@@ -653,3 +724,7 @@
 #endif
 
 #define MICROPY_HW_USES_BOOTLOADER (MICROPY_HW_VTOR != 0x08000000)
+
+#ifndef MICROPY_HW_ETH_DMA_ATTRIBUTE
+#define MICROPY_HW_ETH_DMA_ATTRIBUTE __attribute__((aligned(16384)));
+#endif

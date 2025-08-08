@@ -28,13 +28,10 @@ jobs:
         visualstudio: ['2017', '2019', '2022']
         include:
         - visualstudio: '2017'
-          runner: windows-latest
           vs_version: '[15, 16)'
         - visualstudio: '2019'
-          runner: windows-2019
           vs_version: '[16, 17)'
         - visualstudio: '2022'
-          runner: windows-2022
           vs_version: '[17, 18)'
         # trim down the number of jobs in the matrix
         exclude:
@@ -42,7 +39,9 @@ jobs:
           configuration: Debug
         - visualstudio: '2019'
           configuration: Debug
-    runs-on: ${{ matrix.runner }}
+    runs-on: windows-latest
+    env:
+      CI_BUILD_CONFIGURATION: ${{ matrix.configuration }}
     steps:
     - name: Install Visual Studio 2017
       if: matrix.visualstudio == '2017'
@@ -50,13 +49,15 @@ jobs:
         choco install visualstudio2017buildtools
         choco install visualstudio2017-workload-vctools
         choco install windows-sdk-8.1
+    - name: Install Visual Studio 2019
+      if: matrix.visualstudio == '2019'
+      run: |
+        choco install visualstudio2019buildtools
+        choco install visualstudio2019-workload-vctools
+        choco install windows-sdk-8.1
     - uses: microsoft/setup-msbuild@v2
       with:
         vs-version: ${{ matrix.vs_version }}
-    - uses: actions/setup-python@v5
-      if: matrix.runner == 'windows-2019'
-      with:
-        python-version: '3.9'
     - uses: actions/checkout@v4
     - name: Build mpy-cross.exe
       run: msbuild mpy-cross\mpy-cross.vcxproj -maxcpucount -property:Configuration=${{ matrix.configuration }} -property:Platform=${{ matrix.platform }}
@@ -101,23 +102,18 @@ jobs:
             env: i686
           - sys: mingw64
             env: x86_64
-    runs-on: windows-2022
+    runs-on: windows-latest
     env:
       CHERE_INVOKING: enabled_from_arguments
     defaults:
       run:
         shell: msys2 {0}
     steps:
-    - name: Get Python path
-      id: python_path
-      shell: python
-      run: |
-        import os
-        import sys
-        output = f"python={os.fspath(sys.executable)}"
-        print(output)
-        with open(os.environ["GITHUB_OUTPUT"], "w") as f:
-            f.write(output)
+    - uses: actions/setup-python@v5
+      # note: can go back to installing mingw-w64-${{ matrix.env }}-python after
+      # MSYS2 updates to Python >3.12 (due to settrace compatibility issue)
+      with:
+        python-version: '3.11'
     - uses: msys2/setup-msys2@v2
       with:
         msystem: ${{ matrix.sys }}
@@ -126,9 +122,9 @@ jobs:
           make
           mingw-w64-${{ matrix.env }}-gcc
           pkg-config
-          python3
           git
           diffutils
+        path-type: inherit  # Remove when setup-python is removed
     - uses: actions/checkout@v4
     - name: Build mpy-cross.exe
       run: make -C mpy-cross -j2
@@ -138,8 +134,7 @@ jobs:
       run: make -C ports/windows -j2 VARIANT=${{ matrix.variant }}
     - name: Run tests
       id: test
-      # msys python breaks tests so we need to use "real" windows python
-      run: MICROPY_CPYTHON3=$(cygpath "${{ steps.python_path.outputs.python }}") make -C ports/windows test_full VARIANT=${{ matrix.variant }}
+      run: make -C ports/windows test_full VARIANT=${{ matrix.variant }}
     - name: Print failures
       if: failure() && steps.test.conclusion == 'failure'
       working-directory: tests

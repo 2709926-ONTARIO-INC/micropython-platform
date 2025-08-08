@@ -44,7 +44,8 @@
 #include "py/repl.h"
 #include "py/gc.h"
 #include "py/objstr.h"
-#include "py/stackctrl.h"
+#include "py/cstack.h"
+#include "py/mperrno.h"
 #include "py/mphal.h"
 #include "py/mpthread.h"
 #include "extmod/misc.h"
@@ -318,6 +319,7 @@ static void print_help(char **argv) {
     printf(
         "usage: %s [<opts>] [-X <implopt>] [-c <command> | -m <module> | <filename>]\n"
         "Options:\n"
+        "--version : show version information\n"
         "-h : print this help message\n"
         "-i : enable inspection via REPL after running command/module/file\n"
         #if MICROPY_DEBUG_PRINTERS
@@ -367,6 +369,10 @@ static void pre_process_options(int argc, char **argv) {
             }
             if (strcmp(argv[a], "-h") == 0) {
                 print_help(argv);
+                exit(0);
+            }
+            if (strcmp(argv[a], "--version") == 0) {
+                printf(MICROPY_BANNER_NAME_AND_VERSION "; " MICROPY_BANNER_MACHINE "\n");
                 exit(0);
             }
             if (strcmp(argv[a], "-X") == 0) {
@@ -447,10 +453,13 @@ static void set_sys_argv(char *argv[], int argc, int start_arg) {
 
 #if MICROPY_PY_SYS_EXECUTABLE
 extern mp_obj_str_t mp_sys_executable_obj;
-static char executable_path[MICROPY_ALLOC_PATH_MAX];
+static char *executable_path = NULL;
 
 static void sys_set_excecutable(char *argv0) {
-    if (realpath(argv0, executable_path)) {
+    if (executable_path == NULL) {
+        executable_path = realpath(argv0, NULL);
+    }
+    if (executable_path != NULL) {
         mp_obj_str_set_data(&mp_sys_executable_obj, (byte *)executable_path, strlen(executable_path));
     }
 }
@@ -468,12 +477,20 @@ int main(int argc, char **argv) {
     #if MICROPY_PY_THREAD
     mp_thread_init();
     #endif
+
+    // Define a reasonable stack limit to detect stack overflow.
+    mp_uint_t stack_size = 40000 * (sizeof(void *) / 4);
+    #if defined(__arm__) && !defined(__thumb2__)
+    // ARM (non-Thumb) architectures require more stack.
+    stack_size *= 2;
+    #endif
+
     // We should capture stack top ASAP after start, and it should be
     // captured guaranteedly before any other stack variables are allocated.
     // For this, actual main (renamed main_) should not be inlined into
     // this function. main_() itself may have other functions inlined (with
     // their own stack variables), that's why we need this main/main_ split.
-    mp_stack_ctrl_init();
+    mp_cstack_init_with_sp_here(stack_size);
     return main_(argc, argv);
 }
 
@@ -491,14 +508,6 @@ MP_NOINLINE int main_(int argc, char **argv) {
     // catch EPIPE themselves.
     signal(SIGPIPE, SIG_IGN);
     #endif
-
-    // Define a reasonable stack limit to detect stack overflow.
-    mp_uint_t stack_limit = 40000 * (sizeof(void *) / 4);
-    #if defined(__arm__) && !defined(__thumb2__)
-    // ARM (non-Thumb) architectures require more stack.
-    stack_limit *= 2;
-    #endif
-    mp_stack_set_limit(stack_limit);
 
     pre_process_options(argc, argv);
 
@@ -543,7 +552,14 @@ MP_NOINLINE int main_(int argc, char **argv) {
             MP_OBJ_NEW_QSTR(MP_QSTR__slash_),
         };
         mp_vfs_mount(2, args, (mp_map_t *)&mp_const_empty_map);
+
+        // Make sure the root that was just mounted is the current VFS (it's always at
+        // the end of the linked list).  Can't use chdir('/') because that will change
+        // the current path within the VfsPosix object.
         MP_STATE_VM(vfs_cur) = MP_STATE_VM(vfs_mount_table);
+        while (MP_STATE_VM(vfs_cur)->next != NULL) {
+            MP_STATE_VM(vfs_cur) = MP_STATE_VM(vfs_cur)->next;
+        }
     }
     #endif
 
@@ -562,7 +578,12 @@ MP_NOINLINE int main_(int argc, char **argv) {
             // First entry is empty. We've already added an empty entry to sys.path, so skip it.
             ++path;
         }
-        bool path_remaining = *path;
+        // GCC targeting RISC-V 64 reports a warning about `path_remaining` being clobbered by
+        // either setjmp or vfork if that variable it is allocated on the stack.  This may
+        // probably be a compiler error as it occurs on a few recent GCC releases (up to 14.1.0)
+        // but LLVM doesn't report any warnings.
+        static bool path_remaining;
+        path_remaining = *path;
         while (path_remaining) {
             char *path_entry_end = strchr(path, PATHLIST_SEP_CHAR);
             if (path_entry_end == NULL) {
@@ -703,11 +724,9 @@ MP_NOINLINE int main_(int argc, char **argv) {
                 return invalid_args();
             }
         } else {
-            char *pathbuf = malloc(PATH_MAX);
-            char *basedir = realpath(argv[a], pathbuf);
+            char *basedir = realpath(argv[a], NULL);
             if (basedir == NULL) {
                 mp_printf(&mp_stderr_print, "%s: can't open file '%s': [Errno %d] %s\n", argv[0], argv[a], errno, strerror(errno));
-                free(pathbuf);
                 // CPython exits with 2 in such case
                 ret = 2;
                 break;
@@ -716,7 +735,7 @@ MP_NOINLINE int main_(int argc, char **argv) {
             // Set base dir of the script as first entry in sys.path.
             char *p = strrchr(basedir, '/');
             mp_obj_list_store(mp_sys_path, MP_OBJ_NEW_SMALL_INT(0), mp_obj_new_str_via_qstr(basedir, p - basedir));
-            free(pathbuf);
+            free(basedir);
 
             set_sys_argv(argv, argc, a);
             ret = do_file(argv[a]);
@@ -756,7 +775,7 @@ MP_NOINLINE int main_(int argc, char **argv) {
     #endif
 
     #if MICROPY_PY_BLUETOOTH
-    void mp_bluetooth_deinit(void);
+    int mp_bluetooth_deinit(void);
     mp_bluetooth_deinit();
     #endif
 
@@ -782,6 +801,11 @@ MP_NOINLINE int main_(int argc, char **argv) {
     #endif
     #endif
 
+    #if MICROPY_PY_SYS_EXECUTABLE && !defined(NDEBUG)
+    // Again, make memory leak detector happy
+    free(executable_path);
+    #endif
+
     // printf("total bytes = %d\n", m_get_total_bytes_allocated());
     return ret & 0xff;
 }
@@ -793,3 +817,22 @@ void nlr_jump_fail(void *val) {
     fprintf(stderr, "FATAL: uncaught NLR %p\n", val);
     exit(1);
 }
+
+#if MICROPY_VFS_ROM_IOCTL
+
+static uint8_t romfs_buf[4] = { 0xd2, 0xcd, 0x31, 0x00 }; // empty ROMFS
+static const MP_DEFINE_MEMORYVIEW_OBJ(romfs_obj, 'B', 0, sizeof(romfs_buf), romfs_buf);
+
+mp_obj_t mp_vfs_rom_ioctl(size_t n_args, const mp_obj_t *args) {
+    switch (mp_obj_get_int(args[0])) {
+        case MP_VFS_ROM_IOCTL_GET_NUMBER_OF_SEGMENTS:
+            return MP_OBJ_NEW_SMALL_INT(1);
+
+        case MP_VFS_ROM_IOCTL_GET_SEGMENT:
+            return MP_OBJ_FROM_PTR(&romfs_obj);
+    }
+
+    return MP_OBJ_NEW_SMALL_INT(-MP_EINVAL);
+}
+
+#endif

@@ -127,6 +127,10 @@
 #define MICROPY_PY_MACHINE_WDT_INCLUDEFILE  "ports/samd/machine_wdt.c"
 #define MICROPY_PY_MACHINE_WDT_TIMEOUT_MS   (1)
 #define MICROPY_PLATFORM_VERSION            "ASF4"
+#define MICROPY_PY_MACHINE_I2C_TARGET_INCLUDEFILE  "ports/samd/machine_i2c_target.c"
+#define MICROPY_PY_MACHINE_I2C_TARGET_MAX   (SERCOM_INST_NUM)
+#define MICROPY_PY_MACHINE_I2C_TARGET_HARD_IRQ (1)
+#define MICROPY_PY_MACHINE_I2C_TARGET_FINALISER (1)
 
 #define MP_STATE_PORT MP_STATE_VM
 
@@ -137,6 +141,15 @@
 #endif
 #ifndef MICROPY_HW_USB_PID
 #define MICROPY_HW_USB_PID (0x9802)
+#endif
+#ifndef MICROPY_HW_DEFAULT_UART_ID
+#define MICROPY_HW_DEFAULT_UART_ID          (-1)
+#endif
+#ifndef MICROPY_HW_DEFAULT_I2C_ID
+#define MICROPY_HW_DEFAULT_I2C_ID           (-1)
+#endif
+#ifndef MICROPY_HW_DEFAULT_SPI_ID
+#define MICROPY_HW_DEFAULT_SPI_ID           (-1)
 #endif
 
 // Additional entries for use with pendsv_schedule_dispatch.

@@ -23,7 +23,6 @@
 #define MICROPY_OPT_MATH_FACTORIAL              (0)
 #define MICROPY_REPL_EMACS_KEYS                 (0)
 #define MICROPY_PY_BUILTINS_COMPLEX             (0)
-#define MICROPY_PY_FUNCTION_ATTRS               (0)
 #define MICROPY_PY_DELATTR_SETATTR              (0)
 #define MICROPY_PY_BUILTINS_STR_CENTER          (0)
 #define MICROPY_PY_BUILTINS_STR_PARTITION       (0)
@@ -107,6 +106,7 @@
 #define MICROPY_PY_OS_URANDOM       (1)
 #define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_MPZ)
 #define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
+#define MICROPY_FLOAT_FORMAT_IMPL   (MICROPY_FLOAT_FORMAT_IMPL_BASIC)
 #define MICROPY_WARNINGS            (1)
 #define MICROPY_PY_STR_BYTES_CMP_WARN (1)
 #define MICROPY_STREAMS_POSIX_API   (1)
@@ -117,6 +117,9 @@
 #define MICROPY_FATFS_MAX_SS           (4096)
 #define MICROPY_FATFS_LFN_CODE_PAGE    437 /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
 #define MICROPY_ESP8266_APA102         (1)
+
+// Print error information at reboot time if the board crashed.
+#define MICROPY_HW_HARD_FAULT_DEBUG    (0)
 
 // No blocking wait-for-event on ESP8266, only non-blocking pump of the "OS" event
 // loop
@@ -147,9 +150,6 @@
 #define MICROPY_MAKE_POINTER_CALLABLE(p) ((void *)((mp_uint_t)(p)))
 
 #define MP_SSIZE_MAX (0x7fffffff)
-
-#define UINT_FMT "%u"
-#define INT_FMT "%d"
 
 typedef int32_t mp_int_t; // must be pointer size
 typedef uint32_t mp_uint_t; // must be pointer size

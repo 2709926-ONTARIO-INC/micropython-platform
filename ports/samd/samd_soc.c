@@ -31,12 +31,12 @@
  * THE SOFTWARE.
  */
 
+#include "py/mphal.h"
 #include "py/runtime.h"
 #include "modmachine.h"
 #include "samd_soc.h"
 #include "sam.h"
 #include "tusb.h"
-#include "mphalport.h"
 
 extern void machine_rtc_start(bool force);
 
@@ -122,7 +122,7 @@ void samd_init(void) {
     machine_rtc_start(false);
 }
 
-#if MICROPY_PY_MACHINE_I2C || MICROPY_PY_MACHINE_SPI || MICROPY_PY_MACHINE_UART
+#if MICROPY_PY_MACHINE_I2C || MICROPY_PY_MACHINE_I2C_TARGET || MICROPY_PY_MACHINE_SPI || MICROPY_PY_MACHINE_UART
 
 Sercom *sercom_instance[] = SERCOM_INSTS;
 MP_REGISTER_ROOT_POINTER(void *sercom_table[SERCOM_INST_NUM]);
