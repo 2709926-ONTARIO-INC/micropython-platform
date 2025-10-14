@@ -5,8 +5,8 @@ This is a work-in-progress port of MicroPython to Zephyr RTOS
 (http://zephyrproject.org).
 
 This port tries to support all Zephyr versions supported upstream,
-i.e. currently v3.7 (LTS), v4.0 and the development branch. The CI is
-setup to use the latest version, i.e. v4.0.
+i.e. currently v3.7 (LTS), v4.2 and the development branch. The CI is
+setup to use the latest version, i.e. v4.2.
 
 All boards supported by Zephyr (with standard level of features
 support, like UART console) should work with MicroPython (but not all
@@ -19,8 +19,10 @@ Features supported at this time:
 * `machine.Pin` class for GPIO control, with IRQ support.
 * `machine.I2C` class for I2C control.
 * `machine.SPI` class for SPI control.
-* `machine.PWM` class for PWM control
+* `machine.PWM` class for PWM control.
+* `machine.ADC` class for ADC control.
 * `socket` module for networking (IPv4/IPv6).
+* `zsensor` module for reading sensors.
 * "Frozen modules" support to allow to bundle Python modules together
   with firmware. Including complete applications, including with
   run-on-boot capability.
@@ -43,13 +45,13 @@ setup is correct.
 If you already have Zephyr installed but are having issues building the
 MicroPython port then try installing the correct version of Zephyr via:
 
-    $ west init zephyrproject -m https://github.com/zephyrproject-rtos/zephyr --mr v4.0.0
+    $ west init zephyrproject -m https://github.com/zephyrproject-rtos/zephyr --mr v4.2.0
 
 Alternatively, you don't have to redo the Zephyr installation to just
 switch from master to a tagged release, you can instead do:
 
     $ cd zephyrproject/zephyr
-    $ git checkout v4.0.0
+    $ git checkout v4.2.0
     $ west update
 
 With Zephyr installed you may then need to configure your environment,
@@ -119,7 +121,7 @@ To blink an LED:
         time.sleep(0.5)
 
 The above code uses an LED location for a FRDM-K64F board (port B, pin 21;
-following Zephyr conventions port are identified by their devicetree node
+following Zephyr conventions ports are identified by their devicetree node
 label. You will need to adjust it for another board (using board's reference
 materials). To execute the above sample, copy it to clipboard, in MicroPython
 REPL enter "paste mode" using Ctrl+E, paste clipboard, press Ctrl+D to finish
@@ -153,6 +155,13 @@ Example of using SPI to write a buffer to the MOSI pin:
     spi.init(baudrate=500000, polarity=1, phase=1, bits=8, firstbit=SPI.MSB)
     spi.write(b'abcd')
 
+Example of using ADC to read a pin's analog value (the 'zephyr,user' node must contain
+the 'io-channels' property with all the ADC channels):
+
+    from machine import ADC
+
+    adc = ADC(("adc", 0))
+    adc.read_uv()
 
 Minimal build
 -------------

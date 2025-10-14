@@ -59,7 +59,6 @@
 #define MICROPY_PY_BUILTINS_STR_OP_MODULO (1)
 #define MICROPY_PY_BUILTINS_BYTEARRAY (1)
 #define MICROPY_PY_BUILTINS_DICT_FROMKEYS (1)
-#define MICROPY_PY_SYS              (1)
 
 #ifdef CONFIG_BOARD
 #define MICROPY_HW_BOARD_NAME "zephyr-" CONFIG_BOARD
@@ -80,3 +79,9 @@ typedef long mp_off_t;
 #define MP_STATE_PORT MP_STATE_VM
 
 #define MICROPY_EVENT_POLL_HOOK
+
+// Compatibility switches
+
+#ifdef CONFIG_NEWLIB_LIBC
+#define MICROPY_PY_MATH_POW_FIX_NAN (1)
+#endif
